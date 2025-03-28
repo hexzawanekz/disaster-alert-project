@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // กฎสำหรับคอลเลกชัน sent_alerts
+    match /sent_alerts/{document=**} {
+      // อนุญาตให้อ่านได้เฉพาะผู้ที่ login แล้ว
+      allow read: if request.auth != null;
+      
+      // อนุญาตให้เขียนได้เฉพาะ Firebase Admin SDK และผู้ที่ login ที่มีสิทธิ์
+      allow write: if request.auth != null && 
+                     (request.auth.token.admin == true ||
+                      request.resource.data.keys().hasAll(['type', 'sentAt']));
+    }
+    
+    // กฎเริ่มต้นสำหรับคอลเลกชันอื่นๆ (ไม่อนุญาตการเข้าถึงโดยผู้ใช้ทั่วไป)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
